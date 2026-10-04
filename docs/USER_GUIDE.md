@@ -84,3 +84,7 @@ The three writes are sequential, not an atomic transaction. If a write fails, su
 ## Power and care
 
 The supplied IN12_M4 manual specifies DC 5 V, current below 400 mA and dimensions of 132 × 50 × 50 mm. Keep the clock dry, avoid strain on its USB connector and do not open the case.
+
+## Original manufacturer resources
+
+The supplied manual points to the [manufacturer website](https://diym.vip) and [original Android APK](https://diym.vip/upload/guoran.apk). See [Original resources](ORIGINAL_RESOURCES.md) for the printed sources and the leaflet's alternate website address. These external resources are separate from this desktop application.
