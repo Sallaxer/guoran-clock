@@ -13,3 +13,5 @@ The leaflet also identifies a WeChat mini-program as **XG_Clock** and includes W
 These are the historical addresses printed in the supplied material, not a guarantee of current availability or compatibility. The original Android APK may not install on recent Android versions. It is linked for reference and is not bundled with this project's releases.
 
 The manufacturer scans are not included in the public repository because they also contain a device-specific warranty label. The English user guide summarizes the operating instructions; it does not claim to be an official manufacturer translation.
+
+Availability check on 2026-10-04: the APK endpoint responded with HTTP 200 to a HEAD request. The website home pages could not be retrieved during the check. The APK was not installed or executed as part of this check.
