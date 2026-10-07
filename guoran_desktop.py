@@ -1,10 +1,11 @@
-"""Guoran 2: local Windows WebView UI and native BLE transport."""
+"""Guoran 2: local WebView UI and native BLE transport (Windows, macOS, Linux)."""
 import asyncio
 import copy
 import json
 import os
 import queue
 import re
+import subprocess
 import sys
 import threading
 import traceback
@@ -17,7 +18,27 @@ from localization import MESSAGES, translate
 
 RESOURCES = Path(getattr(sys, '_MEIPASS', Path(__file__).parent))
 BASE = Path(sys.executable).parent if getattr(sys, 'frozen', False) else Path(__file__).parent
-PREFERENCES = Path(os.environ.get('LOCALAPPDATA', str(BASE))) / 'GuoranClock' / 'preferences.json'
+
+def data_dir():
+    if sys.platform == 'win32':
+        return Path(os.environ.get('LOCALAPPDATA', str(BASE))) / 'GuoranClock'
+    if sys.platform == 'darwin':
+        return Path.home() / 'Library' / 'Application Support' / 'GuoranClock'
+    return Path(os.environ.get('XDG_CONFIG_HOME') or Path.home() / '.config') / 'GuoranClock'
+
+def output_dir():
+    # A macOS .app bundle or a Linux install dir is not a place for user files.
+    if sys.platform == 'win32':
+        return BASE
+    if sys.platform == 'darwin':
+        # ~/Downloads is TCC-protected; writing there fails without a consent prompt.
+        path = Path.home() / 'Library' / 'Logs' / 'GuoranClock'
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+    downloads = Path.home() / 'Downloads'
+    return downloads if downloads.is_dir() else Path.home()
+
+PREFERENCES = data_dir() / 'preferences.json'
 
 class Api:
     def __init__(self):
@@ -32,7 +53,7 @@ class Api:
         self._state = {'connected':False, 'busy':False, 'status':'Подключите часы, чтобы начать',
                        'devices':[], 'device_name':'Часы не подключены', 'snapshot':None,
                        'snapshot_at':None, 'logs':[], 'auto_sync':False, 'version':'2.3.1', 'error':None,
-                       'theme': 'light', 'language': 'ru', 'schedule': {'on': '', 'off': ''},
+                       'theme': 'dark', 'language': 'ru', 'schedule': {'on': '', 'off': ''},
                        'requested': {}, 'last_command': None}
         self._preferences_lock = threading.Lock()
         try:
@@ -271,10 +292,12 @@ class Api:
 
     def save_log(self):
         state=self.poll()
-        path=BASE/'guoran-diagnostics.txt'
+        path=output_dir()/'guoran-diagnostics.txt'
         try:
             path.write_text('Guoran Clock 2.3.1\n'+ '\n'.join(state['logs'])+
                             '\n\nПоследний ответ:\n'+json.dumps(state['snapshot'],ensure_ascii=False,indent=2),encoding='utf-8')
+            if sys.platform == 'darwin':
+                subprocess.Popen(['open', '-R', str(path)])
             return {'ok':True,'path':str(path)}
         except OSError as e:
             return {'ok':False,'error':str(e)}
@@ -292,11 +315,12 @@ class Api:
 
 def main():
     import webview
-    try:
-        import ctypes
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('Guoran.Clock.Desktop.2')
-    except Exception:
-        pass
+    if sys.platform == 'win32':
+        try:
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('Guoran.Clock.Desktop.2')
+        except Exception:
+            pass
     api=Api()
     html=(RESOURCES/'ui'/'index.html').read_text(encoding='utf-8')
     html=html.replace('/*__CSS__*/',(RESOURCES/'ui'/'app.css').read_text(encoding='utf-8'))
@@ -306,12 +330,13 @@ def main():
     icon=RESOURCES/'ui'/'clock-ui.png'
     html=html.replace('__CLOCK_ICON__','data:image/png;base64,'+base64.b64encode(icon.read_bytes()).decode() if icon.exists() else '')
     window=webview.create_window('Guoran Clock',html=html,js_api=api,
-        width=1180,height=860,min_size=(880,660),background_color='#f4f0e8',text_select=True)
+        width=1180,height=860,min_size=(880,660),background_color='#191714',text_select=True)
     window.events.closed+=api._shutdown
     try:
-        webview.start(gui='edgechromium',private_mode=True)
+        # None picks Cocoa WebKit on macOS and GTK or Qt on Linux.
+        webview.start(gui='edgechromium' if sys.platform == 'win32' else None,private_mode=True)
     except Exception:
-        (BASE/'guoran-startup-error.txt').write_text(traceback.format_exc(),encoding='utf-8')
+        (output_dir()/'guoran-startup-error.txt').write_text(traceback.format_exc(),encoding='utf-8')
         raise
 
 if __name__=='__main__':
