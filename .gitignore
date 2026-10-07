@@ -12,3 +12,5 @@ reference/
 diagnostics/
 *.log
 .DS_Store
+
+smoke-report.json

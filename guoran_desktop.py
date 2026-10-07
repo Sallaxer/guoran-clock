@@ -52,7 +52,7 @@ class Api:
         self._connection = None
         self._state = {'connected':False, 'busy':False, 'status':'Подключите часы, чтобы начать',
                        'devices':[], 'device_name':'Часы не подключены', 'snapshot':None,
-                       'snapshot_at':None, 'logs':[], 'auto_sync':False, 'version':'2.3.1', 'error':None,
+                       'snapshot_at':None, 'logs':[], 'auto_sync':False, 'version':'2.4.0', 'error':None,
                        'theme': 'dark', 'language': 'ru', 'schedule': {'on': '', 'off': ''},
                        'requested': {}, 'last_command': None}
         self._preferences_lock = threading.Lock()
@@ -292,9 +292,9 @@ class Api:
 
     def save_log(self):
         state=self.poll()
-        path=output_dir()/'guoran-diagnostics.txt'
         try:
-            path.write_text('Guoran Clock 2.3.1\n'+ '\n'.join(state['logs'])+
+            path=output_dir()/'guoran-diagnostics.txt'
+            path.write_text('Guoran Clock 2.4.0\n'+ '\n'.join(state['logs'])+
                             '\n\nПоследний ответ:\n'+json.dumps(state['snapshot'],ensure_ascii=False,indent=2),encoding='utf-8')
             if sys.platform == 'darwin':
                 subprocess.Popen(['open', '-R', str(path)])
@@ -334,7 +334,32 @@ def main():
     window.events.closed+=api._shutdown
     try:
         # None picks Cocoa WebKit on macOS and GTK or Qt on Linux.
-        webview.start(gui='edgechromium' if sys.platform == 'win32' else None,private_mode=True)
+        smoke = None
+        if '--smoke-test' in sys.argv:
+            report = Path(sys.argv[sys.argv.index('--smoke-test') + 1]).resolve()
+            def smoke():
+                import time
+                try:
+                    deadline = time.monotonic() + 60
+                    while time.monotonic() < deadline:
+                        if window.evaluate_js("typeof apiReady !== 'undefined' && apiReady"):
+                            break
+                        time.sleep(.2)
+                    else:
+                        raise RuntimeError('WebView API did not initialize')
+                    result = window.evaluate_js("""JSON.stringify((()=>{
+                        applyLanguage('en');openMenuReference();
+                        return {ready:apiReady, rows:document.querySelectorAll('#remote-menu-table tr').length,
+                            visible:!document.querySelector('#remote-reference').hidden,
+                            plus:document.querySelector('[data-key="K06"]').textContent.trim(),
+                            minus:document.querySelector('[data-key="K09"]').textContent.trim()};
+                    })())""")
+                    report.write_text(result, encoding='utf-8')
+                except Exception:
+                    report.write_text(json.dumps({'error': traceback.format_exc()}), encoding='utf-8')
+                finally:
+                    window.destroy()
+        webview.start(smoke, gui='edgechromium' if sys.platform == 'win32' else None,private_mode=True)
     except Exception:
         (output_dir()/'guoran-startup-error.txt').write_text(traceback.format_exc(),encoding='utf-8')
         raise

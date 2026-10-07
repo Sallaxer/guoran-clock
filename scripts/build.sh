@@ -2,7 +2,7 @@
 # macOS: releases/GuoranClock.app and a zip; Linux: a single-file binary.
 set -eu
 PYTHON=${PYTHON:-python3}
-VERSION=2.3.1
+VERSION=2.4.0
 cd "$(dirname "$0")/.."
 ROOT=$PWD
 

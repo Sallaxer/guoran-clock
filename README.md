@@ -17,17 +17,17 @@ A desktop controller (Windows, macOS, Linux) for XGGF Bluetooth LE nixie clocks,
 
 ## Requirements
 
-- Windows 10 or 11 with Microsoft Edge WebView2 Runtime, macOS 12 or later, or Linux with BlueZ and WebKitGTK.
+- Windows 10 or 11 with Microsoft Edge WebView2 Runtime, macOS 14 or later (Apple Silicon), or Ubuntu 24.04 x86_64 with BlueZ and WebKitGTK 4.1 (or a compatible distribution).
 - A working Bluetooth LE adapter.
 - A compatible XGGF clock. Compatibility with every model or firmware is not established.
 
-The packaged application does not require a separate Python installation. Windows and macOS builds have been used with the physical clock. Linux support is untested with hardware: the tests, window start-up and packaging were checked in a Debian container without a Bluetooth adapter.
+The packaged application does not require a separate Python installation. Earlier Windows versions were tested with the owner’s clock; the macOS contributor reports successful hardware use. Release builds are checked for tests and window start-up in CI. Linux Bluetooth operation still needs physical hardware verification.
 
 On macOS the first scan asks for Bluetooth access; allow it in the dialog or later in System Settings → Privacy & Security → Bluetooth. macOS cannot turn the Bluetooth radio on for an app, so **Enable Bluetooth** opens the Bluetooth settings instead. On Linux the button powers the adapter through BlueZ; an rfkill block must be removed separately.
 
 ## Quick start
 
-1. Download the package for your system from Releases: `GuoranClock-2.3.1-windows-x64.zip` (extract to a writable folder), `GuoranClock-2.3.1-macos-arm64.zip` (move `GuoranClock.app` to Applications) or the Linux binary.
+1. Download the package for your system from Releases: `GuoranClock-2.4.0-windows-x64.zip` (extract to a writable folder), `GuoranClock-2.4.0-macos-arm64.zip` (move `GuoranClock.app` to Applications) or `GuoranClock-2.4.0-linux-x86_64.tar.gz` (extract and run the executable).
 2. Power on the clock, enable Bluetooth on the computer and run the application. The macOS build is ad-hoc signed, not notarized: open it the first time with right-click → **Open**.
 3. Choose **Connect clock → Find clock**. Select a device whose name starts with **XGGF**.
 4. Enter the clock's current six-digit password. The original app's default is **210709**. Click **Connect**.
@@ -55,7 +55,7 @@ python -m venv .venv
 ./scripts/build.ps1 -Python "$PWD/.venv/Scripts/python.exe"
 ```
 
-The build script runs the tests and creates `releases/GuoranClock-2.3.1.exe`. The Windows package includes Python and application dependencies. The system WebView2 runtime is still required.
+The build script runs the tests and creates `releases/GuoranClock-2.4.0.exe`. The Windows package includes Python and application dependencies. The system WebView2 runtime is still required.
 
 macOS, Python 3.13 or later (for example from Homebrew):
 
@@ -66,19 +66,19 @@ PYTHON=.venv/bin/python ./scripts/build.sh
 open releases/GuoranClock.app
 ```
 
-`build.sh` adds the Bluetooth usage description to `Info.plist`, signs the bundle ad hoc and creates `releases/GuoranClock-2.3.1-macos-<arch>.zip` for the build machine's architecture. Run the app from the bundle: a plain `python guoran_desktop.py` from a terminal is killed by macOS on the first Bluetooth call unless the terminal application itself has Bluetooth access.
+`build.sh` adds the Bluetooth usage description to `Info.plist`, signs the bundle ad hoc and creates `releases/GuoranClock-2.4.0-macos-<arch>.zip` for the build machine's architecture. Run the app from the bundle: a plain `python guoran_desktop.py` from a terminal is killed by macOS on the first Bluetooth call unless the terminal application itself has Bluetooth access.
 
 Linux (Debian/Ubuntu package names), using the system GTK bindings:
 
 ```sh
-sudo apt install python3-venv libpython3-dev python3-gi gir1.2-webkit2-4.1 bluez
+sudo apt install python3-venv libpython3-dev python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-webkit2-4.1 bluez
 python3 -m venv --system-site-packages .venv
 .venv/bin/pip install -r requirements.txt
 .venv/bin/python guoran_desktop.py
 PYTHON=.venv/bin/python ./scripts/build.sh
 ```
 
-The Linux build creates a single-file `releases/GuoranClock-2.3.1-linux-<arch>`. It still uses the system WebKitGTK libraries.
+The Linux build creates a single-file `releases/GuoranClock-2.4.0-linux-<arch>`. It still uses the system WebKitGTK libraries.
 
 ## Project layout
 
@@ -101,3 +101,5 @@ The protocol was studied from the original Android app. This is an independent p
 ## Original manufacturer resources
 
 The supplied clock manual lists the [manufacturer website](https://diym.vip) and the [original Guoran Android APK](https://diym.vip/upload/guoran.apk). The leaflet also prints [www.diym.vip](https://www.diym.vip). See [Original resources](docs/ORIGINAL_RESOURCES.md) for source details and availability notes.
+
+Cross-platform support incorporates [PR #1](https://github.com/Sallaxer/guoran-clock/pull/1) by aleksei-bochkarev. Packaged releases are built on Windows, macOS and Linux using the manually triggered GitHub Actions workflow.

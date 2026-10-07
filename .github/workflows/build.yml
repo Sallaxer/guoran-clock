@@ -1,0 +1,79 @@
+name: Build desktop packages
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-2022
+            platform: windows-x64
+          - os: macos-14
+            platform: macos-arm64
+          - os: ubuntu-24.04
+            platform: linux-x86_64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        if: runner.os != 'Linux'
+        with:
+          python-version: '3.13'
+      - name: Install Windows and macOS dependencies
+        if: runner.os != 'Linux'
+        run: python -m pip install -r requirements.txt
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-venv libpython3-dev python3-gi python3-gi-cairo gir1.2-gtk-3.0 gir1.2-webkit2-4.1 bluez xvfb
+          /usr/bin/python3 -m venv --system-site-packages .venv
+          .venv/bin/python -m pip install -r requirements.txt
+      - name: Build Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/build.ps1
+      - name: Build macOS
+        if: runner.os == 'macOS'
+        run: PYTHON=python bash scripts/build.sh
+      - name: Build Linux
+        if: runner.os == 'Linux'
+        run: PYTHON=.venv/bin/python bash scripts/build.sh
+      - name: Smoke test Windows package
+        if: runner.os == 'Windows'
+        run: python scripts/smoke_test.py releases/GuoranClock-2.4.0.exe
+      - name: Smoke test macOS package
+        if: runner.os == 'macOS'
+        run: python scripts/smoke_test.py releases/GuoranClock.app/Contents/MacOS/GuoranClock
+      - name: Smoke test Linux package
+        if: runner.os == 'Linux'
+        run: xvfb-run -a .venv/bin/python scripts/smoke_test.py releases/GuoranClock-2.4.0-linux-x86_64
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force releases/windows/docs | Out-Null
+          Copy-Item releases/GuoranClock-2.4.0.exe releases/windows/
+          Copy-Item docs/*.md releases/windows/docs/
+          Compress-Archive releases/windows/* releases/GuoranClock-2.4.0-windows-x64.zip
+      - name: Package Linux
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p releases/linux/docs
+          cp releases/GuoranClock-2.4.0-linux-x86_64 releases/linux/
+          cp docs/*.md releases/linux/docs/
+          tar -czf releases/GuoranClock-2.4.0-linux-x86_64.tar.gz -C releases/linux .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: |
+            releases/*.zip
+            releases/*.tar.gz
+            releases/*.exe
+            smoke-report.json
+          if-no-files-found: error
