@@ -6,7 +6,7 @@ import sys
 
 report = Path('smoke-report.json').resolve()
 report.unlink(missing_ok=True)
-subprocess.run([str(Path(sys.argv[1]).resolve()), '--smoke-test', str(report)], check=True, timeout=90)
+subprocess.run([str(Path(sys.argv[1]).resolve()), '--smoke-test', str(report)], check=True, timeout=150)
 result = json.loads(report.read_text(encoding='utf-8'))
 assert 'error' not in result, result
 assert result['ready'] and result['visible'], result

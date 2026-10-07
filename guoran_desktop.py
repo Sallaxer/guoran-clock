@@ -315,6 +315,11 @@ class Api:
 
 def main():
     import webview
+    if '--smoke-test' in sys.argv:
+        import logging
+        handler = logging.FileHandler('smoke-webview.log', encoding='utf-8')
+        logging.getLogger('pywebview').addHandler(handler)
+        logging.getLogger('pywebview').setLevel(logging.DEBUG)
     if sys.platform == 'win32':
         try:
             import ctypes
@@ -340,6 +345,8 @@ def main():
             def smoke():
                 import time
                 try:
+                    if not window.events.loaded.wait(60):
+                        raise RuntimeError('Page load timed out; shown=' + str(window.events.shown.is_set()))
                     deadline = time.monotonic() + 60
                     while time.monotonic() < deadline:
                         if window.evaluate_js("typeof apiReady !== 'undefined' && apiReady"):
