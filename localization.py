@@ -8,6 +8,7 @@ MESSAGES = {
     'Поиск Bluetooth LE устройств…': 'Searching for Bluetooth LE devices…',
     'Bluetooth включён': 'Bluetooth is on',
     'Bluetooth-адаптер не найден': 'Bluetooth adapter not found',
+    'Включите Bluetooth в открывшихся настройках macOS': 'Turn on Bluetooth in the macOS Settings window that opened',
     'Подключение и проверка протокола…': 'Connecting and checking the protocol…',
     'Читаю настройки часов…': 'Reading clock settings…',
     'Настройки получены от часов': 'Settings received from the clock',
@@ -40,4 +41,8 @@ def translate(message, language):
         return 'Error: '+translate(message[8:], language)
     if message.startswith('Windows не разрешила включить Bluetooth'):
         return 'Windows could not turn on Bluetooth. Enable it in Windows Settings.'
+    if message.startswith('Linux не разрешил включить Bluetooth'):
+        return 'Linux could not turn on Bluetooth. Check rfkill and system settings.'
+    if message.startswith('BlueZ недоступен'):
+        return 'BlueZ is not available'+message[len('BlueZ недоступен'):]
     return message
