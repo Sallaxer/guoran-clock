@@ -51,14 +51,14 @@ class ScheduleTests(unittest.TestCase):
         self.assertNotIn('switches:0',state['requested'])
     def test_draft_is_local_and_survives_theme_language_changes(self):
         self.api.save_schedule('08:00','00:15')
-        self.api.set_language('en');self.api.set_theme('dark')
+        self.api.set_language('en');self.api.set_theme('light')
         self.assertEqual(self.sent,[])
         another=desktop.Api()
         try:
             state=another.poll()
             self.assertEqual(state['schedule'],{'on':'08:00','off':'00:15'})
             self.assertEqual(state['language'],'en')
-            self.assertEqual(state['theme'],'dark')
+            self.assertEqual(state['theme'],'light')
             self.assertEqual(state['status'],'Connect your clock to begin')
         finally:another._shutdown()
     def test_operation_lock_prevents_interleaving(self):

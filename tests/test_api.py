@@ -33,11 +33,11 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(self.api.poll()['requested'],{})
     def test_theme_persists_and_invalid_theme_is_rejected(self):
         with tempfile.TemporaryDirectory() as temp, patch.object(desktop,'PREFERENCES',Path(temp)/'preferences.json'):
-            self.assertTrue(self.api.set_theme('dark')['ok'])
-            self.assertEqual(self.api.poll()['theme'],'dark')
+            self.assertTrue(self.api.set_theme('light')['ok'])
+            self.assertEqual(self.api.poll()['theme'],'light')
             self.assertFalse(self.api.set_theme('wrong')['ok'])
             another=desktop.Api()
-            try: self.assertEqual(another.poll()['theme'],'dark')
+            try: self.assertEqual(another.poll()['theme'],'light')
             finally: another._shutdown()
 
 if __name__=='__main__':unittest.main()

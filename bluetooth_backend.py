@@ -1,5 +1,7 @@
 import asyncio
 import concurrent.futures
+import subprocess
+import sys
 import threading
 from bleak import BleakClient, BleakScanner
 from protocol import StateBuffer
@@ -63,6 +65,41 @@ class Bluetooth:
         self.emit('status', f'Найдено устройств: {len(rows)}. Выберите часы XGGF.')
 
     async def radio(self):
+        if sys.platform == 'win32':
+            await self.radio_windows()
+        elif sys.platform == 'darwin':
+            # macOS has no public API to power the radio; send the user to Settings.
+            subprocess.Popen(['open', 'x-apple.systempreferences:com.apple.BluetoothSettings'])
+            self.emit('status', 'Включите Bluetooth в открывшихся настройках macOS')
+        else:
+            await self.radio_bluez()
+
+    async def radio_bluez(self):
+        from dbus_fast import BusType, DBusError, Variant
+        from dbus_fast.aio import MessageBus
+        bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+        try:
+            root = bus.get_proxy_object('org.bluez', '/', await bus.introspect('org.bluez', '/'))
+            objects = await root.get_interface('org.freedesktop.DBus.ObjectManager').call_get_managed_objects()
+            adapters = [path for path, interfaces in objects.items() if 'org.bluez.Adapter1' in interfaces]
+            if not adapters:
+                raise RuntimeError('Bluetooth-адаптер не найден')
+            for path in adapters:
+                if objects[path]['org.bluez.Adapter1']['Powered'].value:
+                    continue
+                adapter = bus.get_proxy_object('org.bluez', path, await bus.introspect('org.bluez', path))
+                try:
+                    await adapter.get_interface('org.freedesktop.DBus.Properties').call_set(
+                        'org.bluez.Adapter1', 'Powered', Variant('b', True))
+                except DBusError as e:
+                    raise RuntimeError(f'Linux не разрешил включить Bluetooth ({e.text}). Проверьте rfkill и настройки системы.')
+        except DBusError as e:
+            raise RuntimeError(f'BlueZ недоступен ({e.text})')
+        finally:
+            bus.disconnect()
+        self.emit('status', 'Bluetooth включён')
+
+    async def radio_windows(self):
         from winrt.windows.devices.radios import Radio, RadioKind, RadioState
         radios = [r for r in await Radio.get_radios_async() if r.kind == RadioKind.BLUETOOTH]
         if not radios:
