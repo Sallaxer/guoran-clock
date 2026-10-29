@@ -1,6 +1,6 @@
 """Protocol recovered from guoran.apk assets/apps/H5DD29EBE/www/js/index.js."""
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 SWITCHES = [(str(i), f'Лампа {i}') for i in range(1, 7)] + [
     ('7', 'Синхронизация времени'), ('8', 'Будильник 1'), ('9', 'Будильник 2'),
@@ -24,6 +24,11 @@ def time_command(kind, value):
 def system_time(now=None):
     now = now or datetime.now()
     return now.strftime('$%Y-%m-%d;%H:%M:%S;') + f'0{(now.weekday()+1)%7}'
+
+def next_second(now):
+    # The clock starts its second on receipt, so mid-second sends would lag.
+    target = now.replace(microsecond=0) + timedelta(seconds=1)
+    return target, (target - now).total_seconds()
 
 def parse_state(frame):
     if len(frame) != 93 or not frame.endswith('CSS'):

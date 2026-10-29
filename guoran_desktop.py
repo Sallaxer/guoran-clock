@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 from bluetooth_backend import Bluetooth
-from protocol import SWITCHES, rgb_command, system_time, time_command
+from protocol import SWITCHES, next_second, rgb_command, system_time, time_command
 from localization import MESSAGES, translate
 
 RESOURCES = Path(getattr(sys, '_MEIPASS', Path(__file__).parent))
@@ -39,6 +39,11 @@ def output_dir():
     return downloads if downloads.is_dir() else Path.home()
 
 PREFERENCES = data_dir() / 'preferences.json'
+# Time packets a second apart leave the clock 2 s behind once sync stops; a lone packet
+# after a pause sets it within 0.3 s. Pauses are the ones measured on an IN12_M4.
+PAUSE_AFTER_S71 = 1
+PAUSE_AFTER_STREAM = 3
+PAUSE_BEFORE_S70 = 1
 
 class Api:
     def __init__(self):
@@ -260,11 +265,19 @@ class Api:
             return self._run(enter_menu())
         return self._run(self._change(key))
 
+    async def _send_time(self):
+        target, delay = next_second(datetime.now())
+        await asyncio.sleep(delay)
+        await self._bt.send(system_time(target))
+
     def sync_time(self):
         async def sync():
             await self._bt.send('S71')
-            await self._bt.send(system_time())
+            self._events.put(('status', 'Синхронизирую время…'))
+            await asyncio.sleep(PAUSE_AFTER_S71 if not self._sync else PAUSE_AFTER_STREAM)
+            await self._send_time()
             if not self._sync:
+                await asyncio.sleep(PAUSE_BEFORE_S70)
                 await self._bt.send('S70')
             await self._bt.request_state()
         return self._run(sync())
@@ -273,19 +286,27 @@ class Api:
         if type(enabled) is not bool:
             return {'ok':False,'error':'Неверное значение'}
         async def change():
-            await self._bt.send('S7'+str(int(enabled)))
-            self._sync=enabled
             if enabled:
-                await self._bt.send(system_time())
+                await self._bt.send('S71')
+                self._sync=True
+                await self._send_time()
+            else:
+                self._sync=False
+                self._events.put(('status', 'Синхронизирую время…'))
+                await asyncio.sleep(PAUSE_AFTER_STREAM)
+                await self._send_time()
+                await asyncio.sleep(PAUSE_BEFORE_S70)
+                await self._bt.send('S70')
             await self._bt.request_state()
         return self._run(change())
 
     async def _sync_loop(self):
         while not self._closing:
-            await asyncio.sleep(1)
+            target, delay = next_second(datetime.now())
+            await asyncio.sleep(delay)
             if self._sync and self._bt.ready and not self._operation_lock.locked():
                 try:
-                    await self._bt.send(system_time())
+                    await self._bt.send(system_time(target))
                 except Exception as e:
                     self._sync=False
                     self._events.put(('error',str(e)))

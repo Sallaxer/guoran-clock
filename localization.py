@@ -11,6 +11,7 @@ MESSAGES = {
     'Включите Bluetooth в открывшихся настройках macOS': 'Turn on Bluetooth in the macOS Settings window that opened',
     'Подключение и проверка протокола…': 'Connecting and checking the protocol…',
     'Читаю настройки часов…': 'Reading clock settings…',
+    'Синхронизирую время…': 'Synchronizing time…',
     'Настройки получены от часов': 'Settings received from the clock',
     'Соединение есть, но ответа с настройками пока нет. Повторите чтение.': 'Connected, but no settings reply received. Try reading again.',
     'Повторный запрос без ответа. Переподключаюсь для чтения настроек…': 'No reply. Reconnecting to read settings…',

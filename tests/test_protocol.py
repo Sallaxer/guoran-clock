@@ -2,7 +2,7 @@ import sys, unittest
 from datetime import datetime
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from protocol import SWITCHES, StateBuffer, rgb_command, system_time, time_command, parse_state
+from protocol import SWITCHES, StateBuffer, next_second, rgb_command, system_time, time_command, parse_state
 class ProtocolTests(unittest.TestCase):
     def setUp(self):
         self.frame='R255-G100-B000'+''.join('S'+key+str(i%2) for i,(key,_) in enumerate(SWITCHES))+'A07:30AA19:45BT06:00OT23:00CCSS'
@@ -29,6 +29,9 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(time_command('off','23:59'),'T23:59C')
         self.assertEqual(system_time(datetime(2026,10,4,9,5,3)),'$2026-10-04;09:05:03;00')
         self.assertEqual(system_time(datetime(2026,10,3,9,5,3)),'$2026-10-03;09:05:03;06')
+    def test_next_second_waits_for_boundary(self):
+        self.assertEqual(next_second(datetime(2026,10,29,23,59,59,950000)),(datetime(2026,10,30,0,0,0),0.05))
+        self.assertEqual(next_second(datetime(2026,10,29,12,0,0)),(datetime(2026,10,29,12,0,1),1.0))
         for value in ['24:00','7:30','12:60','bad']:
             with self.assertRaises(ValueError): time_command('on',value)
     def test_real_firmware_unknown_fields_do_not_hide_state(self):
