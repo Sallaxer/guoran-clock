@@ -67,6 +67,7 @@ const menuRows = [
  ['18',['Сброс часов','Reset clock'],['00 — не сбрасывать; 11 — заводские настройки','00 — keep settings; 11 — restore factory settings']]
 ];
 let language='ru';
-function t(key,vars={}){let text=messages[key]?.[language==='en'?1:0]??key;for(const [k,v] of Object.entries(vars))text=text.replaceAll('{'+k+'}',String(v));return text;}
+function languageIndex(value){return value==='zh-CN'?2:value==='en'?1:0;}
+function t(key,vars={}){let text=messages[key]?.[languageIndex(language)]??key;for(const [k,v] of Object.entries(vars))text=text.replaceAll('{'+k+'}',String(v));return text;}
 const serverMessages=/*__ERRORS__*/{};
-function translateError(text){return language==='en'?(serverMessages[text]||text):text;}
+function translateError(text){return serverMessages[language]?.[text]||text;}

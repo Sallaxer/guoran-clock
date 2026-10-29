@@ -13,3 +13,7 @@ assert result['ready'] and result['visible'], result
 assert result['rows'] == 17, result
 assert 'Increase' in result['plus'] and 'Decrease' in result['minus'], result
 print(json.dumps(result))
+
+assert result['zh']['lang'] == 'zh-CN', result
+assert '\u589e\u52a0' in result['zh']['plus'], result
+assert '\u8f89\u5149\u7ba1\u4fdd\u62a4' in result['zh']['menu'], result

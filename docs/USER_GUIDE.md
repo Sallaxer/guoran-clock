@@ -6,7 +6,7 @@ Power the IN12_M4 with its specified 5 V supply. Enable Bluetooth on the compute
 
 If another application is connected to the clock, disconnect it first. Keep the clock near the computer during setup. **Read settings** requests its settings; if there is no response, the application may reconnect. A settings response does not provide a live menu position.
 
-Use the sidebar to select **English** or **Русский**, and switch between light and dark themes. Both choices are saved locally.
+Use the sidebar to select **English**, **Русский** or **简体中文**, and switch between light and dark themes. Both choices are saved locally.
 
 ## Backlight and remote
 
@@ -54,7 +54,7 @@ The **Ambient light sensing** switch is not a verified tube-protection control. 
 
 ## Time and alarms
 
-Use the time section to send the computer's date and time. Continuous time synchronization is a separate option and stops when the application disconnects or reconnects. The displayed computer time is not a live reading from the clock.
+Use the time section to send the computer's date and time. Continuous time synchronization is a separate option and stops when the application disconnects or reconnects. The displayed computer time is not a live reading from the clock. Synchronization takes a few seconds: the app waits for a second boundary, and sends a final isolated packet when continuous synchronization is turned off. If the connection drops during continuous synchronization, synchronize again after reconnecting.
 
 For each alarm, enter the time and click **Set**, then use its on/off switch. Clock menu items 02 and 03 provide the corresponding controls on the device.
 

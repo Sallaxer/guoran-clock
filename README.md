@@ -12,7 +12,7 @@ A desktop controller (Windows, macOS, Linux) for XGGF Bluetooth LE nixie clocks,
 - Backlight color, available controller channels and remote-control buttons.
 - Time synchronization, two alarms and an on/off schedule.
 - A menu reference beside the remote, opened automatically by SET.
-- English and Russian interfaces, light and dark themes.
+- English, Russian and Simplified Chinese interfaces, light and dark themes.
 - Local preferences and exportable diagnostic logs; no cloud service.
 
 ## Requirements
@@ -27,7 +27,7 @@ On macOS the first scan asks for Bluetooth access; allow it in the dialog or lat
 
 ## Quick start
 
-1. Download the package for your system from Releases: `GuoranClock-2.4.0-windows-x64.zip` (extract to a writable folder), `GuoranClock-2.4.0-macos-arm64.zip` (move `GuoranClock.app` to Applications) or `GuoranClock-2.4.0-linux-x86_64.tar.gz` (extract and run the executable).
+1. Download the package for your system from Releases: `GuoranClock-2.5.0-windows-x64.zip` (extract to a writable folder), `GuoranClock-2.5.0-macos-arm64.zip` (move `GuoranClock.app` to Applications) or `GuoranClock-2.5.0-linux-x86_64.tar.gz` (extract and run the executable).
 2. Power on the clock, enable Bluetooth on the computer and run the application. The macOS build is ad-hoc signed, not notarized: open it the first time with right-click → **Open**.
 3. Choose **Connect clock → Find clock**. Select a device whose name starts with **XGGF**.
 4. Enter the clock's current six-digit password. The original app's default is **210709**. Click **Connect**.
@@ -55,7 +55,7 @@ python -m venv .venv
 ./scripts/build.ps1 -Python "$PWD/.venv/Scripts/python.exe"
 ```
 
-The build script runs the tests and creates `releases/GuoranClock-2.4.0.exe`. The Windows package includes Python and application dependencies. The system WebView2 runtime is still required.
+The build script runs the tests and creates `releases/GuoranClock-2.5.0.exe`. The Windows package includes Python and application dependencies. The system WebView2 runtime is still required.
 
 macOS, Python 3.13 or later (for example from Homebrew):
 
@@ -66,7 +66,7 @@ PYTHON=.venv/bin/python ./scripts/build.sh
 open releases/GuoranClock.app
 ```
 
-`build.sh` adds the Bluetooth usage description to `Info.plist`, signs the bundle ad hoc and creates `releases/GuoranClock-2.4.0-macos-<arch>.zip` for the build machine's architecture. Run the app from the bundle: a plain `python guoran_desktop.py` from a terminal is killed by macOS on the first Bluetooth call unless the terminal application itself has Bluetooth access.
+`build.sh` adds the Bluetooth usage description to `Info.plist`, signs the bundle ad hoc and creates `releases/GuoranClock-2.5.0-macos-<arch>.zip` for the build machine's architecture. Run the app from the bundle: a plain `python guoran_desktop.py` from a terminal is killed by macOS on the first Bluetooth call unless the terminal application itself has Bluetooth access.
 
 Linux (Debian/Ubuntu package names), using the system GTK bindings:
 
@@ -78,7 +78,7 @@ python3 -m venv --system-site-packages .venv
 PYTHON=.venv/bin/python ./scripts/build.sh
 ```
 
-The Linux build creates a single-file `releases/GuoranClock-2.4.0-linux-<arch>`. It still uses the system WebKitGTK libraries.
+The Linux build creates a single-file `releases/GuoranClock-2.5.0-linux-<arch>`. It still uses the system WebKitGTK libraries.
 
 ## Project layout
 

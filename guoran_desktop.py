@@ -57,7 +57,7 @@ class Api:
         self._connection = None
         self._state = {'connected':False, 'busy':False, 'status':'Подключите часы, чтобы начать',
                        'devices':[], 'device_name':'Часы не подключены', 'snapshot':None,
-                       'snapshot_at':None, 'logs':[], 'auto_sync':False, 'version':'2.4.0', 'error':None,
+                       'snapshot_at':None, 'logs':[], 'auto_sync':False, 'version':'2.5.0', 'error':None,
                        'theme': 'dark', 'language': 'ru', 'schedule': {'on': '', 'off': ''},
                        'requested': {}, 'last_command': None}
         self._preferences_lock = threading.Lock()
@@ -66,7 +66,7 @@ class Api:
             theme = prefs.get('theme')
             if theme in ('light', 'dark'):
                 self._state['theme'] = theme
-            if prefs.get('language') in ('ru', 'en'):
+            if prefs.get('language') in ('ru', 'en', 'zh-CN'):
                 self._state['language'] = prefs['language']
             for kind in ('on', 'off'):
                 value = prefs.get('schedule', {}).get(kind, '')
@@ -161,7 +161,7 @@ class Api:
         return {'ok': True}
 
     def set_language(self, language):
-        if language not in ('ru', 'en'):
+        if language not in ('ru', 'en', 'zh-CN'):
             return {'ok': False, 'error': 'Invalid language'}
         return self._save_preferences(language=language)
 
@@ -315,7 +315,7 @@ class Api:
         state=self.poll()
         try:
             path=output_dir()/'guoran-diagnostics.txt'
-            path.write_text('Guoran Clock 2.4.0\n'+ '\n'.join(state['logs'])+
+            path.write_text('Guoran Clock 2.5.0\n'+ '\n'.join(state['logs'])+
                             '\n\nПоследний ответ:\n'+json.dumps(state['snapshot'],ensure_ascii=False,indent=2),encoding='utf-8')
             if sys.platform == 'darwin':
                 subprocess.Popen(['open', '-R', str(path)])
@@ -350,8 +350,8 @@ def main():
     api=Api()
     html=(RESOURCES/'ui'/'index.html').read_text(encoding='utf-8')
     html=html.replace('/*__CSS__*/',(RESOURCES/'ui'/'app.css').read_text(encoding='utf-8'))
-    html=html.replace('/*__JS__*/',(RESOURCES/'ui'/'i18n.js').read_text(encoding='utf-8')+'\n'+(RESOURCES/'ui'/'app.js').read_text(encoding='utf-8'))
-    html=html.replace('/*__ERRORS__*/{}',json.dumps(MESSAGES,ensure_ascii=False))
+    html=html.replace('/*__JS__*/',(RESOURCES/'ui'/'i18n.js').read_text(encoding='utf-8')+'\n'+(RESOURCES/'ui'/'zh.js').read_text(encoding='utf-8')+'\n'+(RESOURCES/'ui'/'app.js').read_text(encoding='utf-8'))
+    html=html.replace('/*__ERRORS__*/{}',json.dumps({lang: {key: translate(key, lang) for key in MESSAGES} for lang in ('en', 'zh-CN')},ensure_ascii=False))
     import base64
     icon=RESOURCES/'ui'/'clock-ui.png'
     html=html.replace('__CLOCK_ICON__','data:image/png;base64,'+base64.b64encode(icon.read_bytes()).decode() if icon.exists() else '')
@@ -376,8 +376,10 @@ def main():
                     else:
                         raise RuntimeError('WebView API did not initialize')
                     result = window.evaluate_js("""JSON.stringify((()=>{
-                        applyLanguage('en');openMenuReference();
-                        return {ready:apiReady, rows:document.querySelectorAll('#remote-menu-table tr').length,
+                        applyLanguage('zh-CN');openMenuReference();
+                        const zh = {plus:document.querySelector('[data-key="K06"]').textContent.trim(), menu:document.querySelector('#remote-menu-table').textContent, lang:document.documentElement.lang};
+                        applyLanguage('en');
+                        return {zh, ready:apiReady, rows:document.querySelectorAll('#remote-menu-table tr').length,
                             visible:!document.querySelector('#remote-reference').hidden,
                             plus:document.querySelector('[data-key="K06"]').textContent.trim(),
                             minus:document.querySelector('[data-key="K09"]').textContent.trim()};
