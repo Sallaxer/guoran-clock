@@ -48,6 +48,16 @@ FFE4 supports notifications rather than direct reads on the tested device. Repea
 
 Successful GATT completion confirms transport delivery, not application by firmware. Requested values are tracked separately; matching fields in a subsequent response clear the pending marker.
 
+## Time synchronization
+
+Measured on the tested IN12_M4 with a camera, timing the minute change against the computer clock. The clock takes the seconds from `$…` and starts that second when the packet arrives, so the app sends each packet at the start of a second.
+
+- A lone packet sent at least 1 s after `S71`, followed by `S70`, sets the clock to within 0.3 s.
+- Packets sent one second apart, as continuous synchronization does, leave the clock 2 s behind once `S70` follows. Sending one more packet after a pause of about 4 s removes the error.
+- `S70` and `S71` alone do not shift the time. After `S70` the clock may not answer `OSC` for several seconds.
+
+The sync button therefore sends `S71`, waits, sends one packet, waits 1 s and sends `S70`. Turning continuous synchronization off stops the stream, waits, sends one lone packet and then `S70`. If the connection drops while continuous synchronization is on, the clock keeps the 2 s error until the next sync.
+
 ## Schedule and SET behavior
 
 The original Android app writes each selected schedule time separately and sends S01/S00 on toggle. The desktop app saves a local draft, then sends `THH:MMO` → `THH:MMC` → `S01` as one serialized operation. It stops on error. Disabling sends only S00. The sequence is not atomic.
